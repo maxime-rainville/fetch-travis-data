@@ -1,7 +1,7 @@
 fetch-travis-data
 =================
 
-Fetch build data from travis. The data can be outputted as JSON or printed out
+Fetch build data from travis for the Silverstripe CMS project. The data can be outputted as JSON or printed out
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/fetch-travis-data.svg)](https://npmjs.org/package/fetch-travis-data)
