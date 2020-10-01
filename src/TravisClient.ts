@@ -28,9 +28,6 @@ class TravisClient
 
     public get(endpoint: string, parameters: any = {}): Promise<any> {
         return new Promise( (resolve) => {
-            // console.log(`https://api.travis-ci.org/${endpoint}`);
-            // console.dir({...this.args(), parameters});
-            
             this.client.get(
                 `https://api.travis-ci.org/${endpoint}`,
                 {...this.args(), parameters}, 
