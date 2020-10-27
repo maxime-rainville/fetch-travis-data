@@ -8,7 +8,7 @@ class TravisClient
 
     private client: Client;
 
-    constructor(private token: string) {
+    constructor(private token: string, private domain: 'com'|'org' = 'com') {
         this.client = new Client();
         this.get = this.get.bind(this);
         this.getAll = this.getAll.bind(this);
@@ -29,7 +29,7 @@ class TravisClient
     public get(endpoint: string, parameters: any = {}): Promise<any> {
         return new Promise( (resolve) => {
             this.client.get(
-                `https://api.travis-ci.org/${endpoint}`,
+                `https://api.travis-ci.${this.domain}/${endpoint}`,
                 {...this.args(), parameters}, 
                 (data: any) => resolve(data)
             )
