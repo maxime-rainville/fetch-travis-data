@@ -1,7 +1,7 @@
 {
   "name": "fetch-travis-data",
   "description": "Fetch build data from travis",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "Maxime Rainville @maxime-rainville",
   "bin": {
     "fetch-travis-data": "./bin/run"

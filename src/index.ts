@@ -20,6 +20,7 @@ class FetchTravisData extends Command {
     help: flags.help({char: 'h'}),
     // flag with a value (-n, --name=VALUE)
     token: flags.string({char: 't', description: 'Travis token'}),
+    domain: flags.string({char: 'd', description: 'Travis domain to target: org or com', default: 'com'}),
     // flag with no value (-f, --force)
     force: flags.boolean({char: 'f'}),
   }
@@ -35,7 +36,7 @@ class FetchTravisData extends Command {
   }
 
   async run() {
-    const {args: {command}, flags: {token}} = this.parse(FetchTravisData)
+    const {args: {command}, flags: {token, domain}} = this.parse(FetchTravisData)
 
     const travisToken = token ?? process.env.TRAVIS_TOKEN;
 
@@ -44,7 +45,14 @@ class FetchTravisData extends Command {
       return;
     }
 
-    this.client = new TravisClient(travisToken);
+    const lcDomain = domain.toLocaleLowerCase();
+    
+    if (lcDomain !== 'org' && lcDomain !== 'com') {
+      this.error('`domain` must be either `com` or `org`.');
+      return;
+    }
+
+    this.client = new TravisClient(travisToken, lcDomain);
 
     switch (command) {
       case 'printFailed':
