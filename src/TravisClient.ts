@@ -38,6 +38,10 @@ class TravisClient
 
     public getAll(endpoint: string, key:string, parameters: any = {}): Promise<any> {
         return this.get(endpoint, parameters).then(data => {
+            if (!data['@pagination']) {
+                return {};
+            }
+            
             const {is_last, next}  = data['@pagination'];
             if (is_last) {
                 return data;

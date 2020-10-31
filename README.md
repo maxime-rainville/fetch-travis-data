@@ -16,12 +16,15 @@ Fetch build data from travis for the Silverstripe CMS project. The data can be o
 <!-- usage -->
 ```sh-session
 $ npm install -g fetch-travis-data
-$ export TRAVIS_TOKEN=<get it from https://travis-ci.org/account/preferences>
-$ fetch-travis-data printFailed # prints out a list of failed builds
-$ fetch-travis-data toJson # prints out a list of all builds as JSON
+$ fetch-travis-data COMMAND
+running command...
+$ fetch-travis-data (-v|--version|version)
+fetch-travis-data/0.1.0 linux-x64 node-v10.19.0
+$ fetch-travis-data --help [COMMAND]
+USAGE
+  $ fetch-travis-data COMMAND
+...
 ```
-
-The travis token can also be provided with the `--token` parameter.
 <!-- usagestop -->
 # Commands
 <!-- commands -->

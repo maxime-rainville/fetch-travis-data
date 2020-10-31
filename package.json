@@ -1,7 +1,7 @@
 {
   "name": "fetch-travis-data",
   "description": "Fetch build data from travis",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Maxime Rainville @maxime-rainville",
   "bin": {
     "fetch-travis-data": "./bin/run"
@@ -12,6 +12,7 @@
     "@oclif/config": "^1.17.0",
     "@oclif/plugin-help": "^3.2.0",
     "node-rest-client": "^3.1.0",
+    "silverstripe-cms-meta": "^0.0.2",
     "travis-ci": "^2.2.0",
     "tslib": "^1.13.0"
   },

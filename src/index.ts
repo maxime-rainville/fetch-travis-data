@@ -1,9 +1,8 @@
 import {Command, flags} from '@oclif/command'
 import * as Config from '@oclif/config';
-import { promises } from 'dns'
-import { DnaOrgFilter } from './Filters/DnaOrgFilter';
 import { OrgFilter } from './Filters/OrgFilter'
 import { SilverstripeOrgFilter } from './Filters/SilverstripeOrgFilter'
+import { SupportedOrgFilter } from './Filters/SupportedOrgFilter';
 import { TravisClient } from './TravisClient'
 import { Branch } from './TravisTypes/Branch'
 import { Repository } from './TravisTypes/Repository'
@@ -33,6 +32,24 @@ class FetchTravisData extends Command {
     this.print = this.print.bind(this);
     this.getBuildsForOrgs = this.getBuildsForOrgs.bind(this);
     this.getBuildsForOrg = this.getBuildsForOrg.bind(this);
+  }
+
+  private getOrgs(): OrgFilter[] {
+    const filters: OrgFilter[] = [
+      'dnadesign',
+      'bringyourownideas',
+      'colymba',
+      'hafriedlander',
+      'lekoala',
+      'silverstripe-themes',
+      'symbiote',
+      'tijsverkoyen',
+      'tractorcow-farm',
+      'tractorcow',
+      'undefinedoffset',
+    ].map(org => new SupportedOrgFilter(org))
+
+    return filters.concat([SilverstripeOrgFilter]);
   }
 
   async run() {
@@ -65,7 +82,7 @@ class FetchTravisData extends Command {
   }
 
   async printFailed() {
-    this.getBuildsForOrgs([SilverstripeOrgFilter, DnaOrgFilter])
+    this.getBuildsForOrgs(this.getOrgs())
       .then(branches => branches.filter(branch => branch.last_build && ['failed','errored'].indexOf(branch.last_build?.state) !== -1))
       .then((failedBranches) => {
         failedBranches.forEach(this.print);
@@ -73,7 +90,7 @@ class FetchTravisData extends Command {
   }
 
   async toJson() {
-    this.getBuildsForOrgs([SilverstripeOrgFilter, DnaOrgFilter])
+    this.getBuildsForOrgs(this.getOrgs())
       .then((branches) => {
         let results: any = {}
 
@@ -135,7 +152,7 @@ class FetchTravisData extends Command {
     const client = this.client;
 
     return client.getRepos(org.name())
-      .then((repos: Repository[]) => repos.filter(org.includeRepo))
+      .then((repos: Repository[]) => repos ? repos.filter(org.includeRepo) : [])
       .then((repos: Repository[]) => Promise.all(repos.map(({slug}) => client.getBranches(slug))))
       .then((branches: any[]) => [].concat(...branches))
       .then((branches: Branch[]) => branches.filter(org.includeBranch))
