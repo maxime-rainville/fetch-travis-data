@@ -1,6 +1,9 @@
 import { Resolver } from 'dns';
 // @ts-ignore
 import { Client } from "node-rest-client";
+import { Throttle } from './Throttle';
+import { Branch } from './TravisTypes/Branch';
+import { Build } from './TravisTypes/Build';
 import { Repository } from './TravisTypes/Repository';
 
 class TravisClient
@@ -8,11 +11,14 @@ class TravisClient
 
     private client: Client;
 
+    private throttler = new Throttle(20);
+
     constructor(private token: string, private domain: 'com'|'org' = 'com') {
         this.client = new Client();
         this.get = this.get.bind(this);
         this.getAll = this.getAll.bind(this);
         this.getBranches = this.getBranches.bind(this);
+        this.getLastBuildForBranch = this.getLastBuildForBranch.bind(this);
     }
 
     private args() {
@@ -27,12 +33,14 @@ class TravisClient
     }
 
     public get(endpoint: string, parameters: any = {}): Promise<any> {
-        return new Promise( (resolve) => {
-            this.client.get(
-                `https://api.travis-ci.${this.domain}/${endpoint}`,
-                {...this.args(), parameters}, 
-                (data: any) => resolve(data)
-            )
+        return this.throttler.throttle( () => {
+            return new Promise( (resolve) => {
+                this.client.get(
+                    `https://api.travis-ci.${this.domain}/${endpoint}`,
+                    {...this.args(), parameters}, 
+                    (data: any, response: any) => {resolve(data);}
+                );
+            });
         });
     }
 
@@ -57,6 +65,17 @@ class TravisClient
         })
     }
 
+    public getFirst(endpoint: string, key:string, parameters: any = {}): Promise<any> {
+        return this.get(endpoint, parameters).then(data => {
+            if (!data[key] || !data[key][0]) {
+                return {};
+            }
+            
+            return data[key][0];
+
+        })
+    }
+
     
     public getRepos(org: string): Promise<Repository[]> {
         return this.getAll(
@@ -74,12 +93,35 @@ class TravisClient
     public getBranches(repo: string) {
         return this.getAll(`repo/${encodeURIComponent(repo)}/branches`, 'branches', {exists_on_github: true})
             .then(data => data.branches)
+            .then((branches: Branch[]) => {
+                return Promise.all(
+                    branches.map(
+                        (branch) => 
+                            this.getLastBuildForBranch(repo, branch.name).then(last_build => ({...branch, last_build}))
+                    )
+                )
+            })
             .catch((error) => {
                 console.error(error);
                 return false;
             });
     }
 
+
+    public getLastBuildForBranch(repo:string, branch: string): Promise<any> {
+        return this.getFirst(
+            `repo/${encodeURIComponent(repo)}/builds`, 
+            'builds', 
+            {'branch.name': branch, 'event_type': 'push,api,cron', 'sort_by': 'number:desc', 'limit': 1}
+        ).then(data => {
+            // console.dir(data);
+            return data;
+        })
+        .catch((error: any) => {
+            console.error(error); 
+            return []
+        });
+    }
 
 }
 
