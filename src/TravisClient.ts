@@ -45,7 +45,7 @@ class TravisClient
 
     public getAll(endpoint: string, key:string, parameters: any = {}): Promise<any> {
         return this.get(endpoint, parameters).then(data => {
-            if (!data['@pagination']) {
+            if (!data || !data['@pagination']) {
                 return {};
             }
             

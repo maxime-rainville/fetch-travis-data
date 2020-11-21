@@ -19,7 +19,7 @@ $ npm install -g fetch-travis-data
 $ fetch-travis-data COMMAND
 running command...
 $ fetch-travis-data (-v|--version|version)
-fetch-travis-data/0.3.0 linux-x64 node-v10.19.0
+fetch-travis-data/0.4.0 linux-x64 node-v10.19.0
 $ fetch-travis-data --help [COMMAND]
 USAGE
   $ fetch-travis-data COMMAND
