@@ -1,11 +1,11 @@
-import {Command, flags} from '@oclif/command'
+import {Command, flags} from '@oclif/command';
 import * as Config from '@oclif/config';
-import { OrgFilter } from './Filters/OrgFilter'
-import { SilverstripeOrgFilter } from './Filters/SilverstripeOrgFilter'
+import { OrgFilter } from './Filters/OrgFilter';
+import { SilverstripeOrgFilter } from './Filters/SilverstripeOrgFilter';
 import { SupportedOrgFilter } from './Filters/SupportedOrgFilter';
-import { TravisClient } from './TravisClient'
-import { Branch } from './TravisTypes/Branch'
-import { Repository } from './TravisTypes/Repository'
+import { TravisClient } from './TravisClient';
+import { Branch } from './TravisTypes/Branch';
+import { Repository } from './TravisTypes/Repository';
 
 class FetchTravisData extends Command {
 

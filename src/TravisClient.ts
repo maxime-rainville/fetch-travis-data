@@ -1,20 +1,19 @@
 import { Resolver } from 'dns';
 // @ts-ignore
-import { Client } from "node-rest-client";
 import { Throttle } from './Throttle';
 import { Branch } from './TravisTypes/Branch';
-import { Build } from './TravisTypes/Build';
 import { Repository } from './TravisTypes/Repository';
+import { RestClient, IRequestOptions } from 'typed-rest-client';
 
 class TravisClient
 {
 
-    private client: Client;
+    private client: RestClient;
 
     private throttler = new Throttle(20);
 
-    constructor(private token: string, private domain: 'com'|'org' = 'com') {
-        this.client = new Client();
+    constructor(private token: string, domain: 'com'|'org' = 'com') {
+        this.client = new RestClient('fetch-traviss-data', `https://api.travis-ci.${domain}`);
         this.get = this.get.bind(this);
         this.getAll = this.getAll.bind(this);
         this.getBranches = this.getBranches.bind(this);
@@ -23,23 +22,23 @@ class TravisClient
 
     private args() {
         return {
-            headers: {
-                "Content-Type": "application/json",
-                'Travis-API-Version': 3,
-                'User-Agent': 'API Explorer',
-                Authorization: `token ${this.token}`
-            }
+            "Content-Type": "application/json",
+            'Travis-API-Version': 3,
+            'User-Agent': 'API Explorer',
+            Authorization: `token ${this.token}`
         };
     }
 
-    public get(endpoint: string, parameters: any = {}): Promise<any> {
+    public get(endpoint: string, params: any = {}): Promise<any> {
         return this.throttler.throttle( () => {
             return new Promise( (resolve) => {
-                this.client.get(
-                    `https://api.travis-ci.${this.domain}/${endpoint}`,
-                    {...this.args(), parameters}, 
-                    (data: any, response: any) => {resolve(data);}
-                );
+                const options: IRequestOptions = {
+                    queryParameters: {params},
+                    additionalHeaders: this.args()
+                };
+                this.client.get(`/${endpoint}`, options).then((response) => {
+                    resolve(response.result);
+                });
             });
         });
     }
@@ -114,7 +113,6 @@ class TravisClient
             'builds', 
             {'branch.name': branch, 'event_type': 'push,api,cron', 'sort_by': 'number:desc', 'limit': 1}
         ).then(data => {
-            // console.dir(data);
             return data;
         })
         .catch((error: any) => {
