@@ -20,8 +20,9 @@ class FetchTravisData extends Command {
     // flag with a value (-n, --name=VALUE)
     token: flags.string({char: 't', description: 'Travis token'}),
     domain: flags.string({char: 'd', description: 'Travis domain to target: org or com', default: 'com'}),
-    // flag with no value (-f, --force)
-    force: flags.boolean({char: 'f'}),
+    output: flags.enum({char: 'o', options: ['pretty', 'json'], default: 'pretty', description: 'Control the output format'}),
+    failed: flags.boolean({char: 'f', default: false, description: 'Only display failed build.'}),
+    verbose: flags.boolean({default: false, description: 'Print out debug statement.'})
   }
 
   static args = [{name: 'command'}]
@@ -32,6 +33,8 @@ class FetchTravisData extends Command {
     this.print = this.print.bind(this);
     this.getBuildsForOrgs = this.getBuildsForOrgs.bind(this);
     this.getBuildsForOrg = this.getBuildsForOrg.bind(this);
+    this.printBranches = this.printBranches.bind(this);
+    this.toJson = this.toJson.bind(this);
   }
 
   private getOrgs(): OrgFilter[] {
@@ -53,7 +56,7 @@ class FetchTravisData extends Command {
   }
 
   async run() {
-    const {args: {command}, flags: {token, domain}} = this.parse(FetchTravisData)
+    const {flags: {token, domain, output, failed, verbose}} = this.parse(FetchTravisData)
 
     const travisToken = token ?? process.env.TRAVIS_TOKEN;
 
@@ -69,49 +72,51 @@ class FetchTravisData extends Command {
       return;
     }
 
-    this.client = new TravisClient(travisToken, lcDomain);
+    this.client = new TravisClient(travisToken, lcDomain, verbose ? this.log : () => {});
 
-    switch (command) {
-      case 'printFailed':
-        this.printFailed();
-        break;
-      case 'toJson':
-        this.toJson();
-        break;
-    }    
+    const outputMethod = 
+      output === 'pretty' ? this.printBranches :
+      output === 'json' ? this.toJson : 
+      () => {};
+
+    this.getBuildsForOrgs(this.getOrgs())
+      .then(failed ? this.filterFailed : b => b)
+      .then(outputMethod)
   }
 
-  async printFailed() {
-    this.getBuildsForOrgs(this.getOrgs())
-      .then(branches => branches.filter(branch => branch.last_build && ['failed','errored'].indexOf(branch.last_build?.state) !== -1))
-      .then((failedBranches) => {
-        failedBranches.forEach(this.print);
-      })
+  /**
+   * Filter out failed branches
+   * @param branches 
+   */
+  filterFailed(branches: Branch[]): Branch[] {
+    return branches.filter(branch => (
+      branch.last_build && 
+      ['failed','errored'].indexOf(branch.last_build?.state) !== -1
+    ));
   }
 
-  async toJson() {
-    this.getBuildsForOrgs(this.getOrgs())
-      .then((branches) => {
-        let results: any = {}
+  toJson(branches: Branch[]) {
+    let results: any = {}
 
-        branches.forEach(({last_build, repository: {slug}, name}) => {
-          if (!last_build) {
-            return;
-          }
+    branches.forEach(({last_build, repository: {slug}, name}) => {
+      if (!last_build) {
+        return;
+      }
 
-          if (!results[slug]) {
-            results[slug] = {};
-          }
+      if (!results[slug]) {
+        results[slug] = {};
+      }
 
-          const {state, started_at, id} = last_build
+      const {state, started_at, id} = last_build
 
-          results[slug][name] = {state, started_at, id};
-        });
+      results[slug][name] = {state, started_at, id};
+    });
 
-        return results;
-      })
-      .then(JSON.stringify)
-      .then(this.log);
+    this.log(JSON.stringify(results));
+  }
+
+  printBranches(branches: Branch[]) {
+    branches.forEach(this.print);
   }
 
   print(branch: Branch) {

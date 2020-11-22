@@ -12,7 +12,7 @@ class TravisClient
 
     private throttler = new Throttle(20);
 
-    constructor(private token: string, domain: 'com'|'org' = 'com') {
+    constructor(private token: string, domain: 'com'|'org' = 'com', private log = (msg:string) => {}) {
         this.client = new RestClient('fetch-traviss-data', `https://api.travis-ci.${domain}`);
         this.get = this.get.bind(this);
         this.getAll = this.getAll.bind(this);
@@ -36,7 +36,10 @@ class TravisClient
                     queryParameters: {params},
                     additionalHeaders: this.args()
                 };
+                this.log(`/${endpoint} ${JSON.stringify(params)}`);
+                
                 this.client.get(`/${endpoint}`, options).then((response) => {
+                    this.log(`Status code: ${response.statusCode}`);
                     resolve(response.result);
                 });
             });
