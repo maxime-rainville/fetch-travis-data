@@ -1,10 +1,3 @@
-import { resolve, Resolver } from 'dns';
-// @ts-ignore
-import { Client } from "node-rest-client";
-import { Branch } from './TravisTypes/Branch';
-import { Build } from './TravisTypes/Build';
-import { Repository } from './TravisTypes/Repository';
-
 /**
  * Simple throttle to avoid sending too many concurrent request
  */
